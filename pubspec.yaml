@@ -43,7 +43,7 @@ dependencies:
   wallet_ffi:
     git:
       url: git@github.com:BitcreditProtocol/wallet-ffi.git
-      ref: flutter
+      ref: master
 
 dev_dependencies:
   flutter_test:
