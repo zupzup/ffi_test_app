@@ -108,13 +108,13 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Future<void> _testCallback() async {
     await callMeBaby(
-        cb: (msg) {
+      cb: (msg) {
         debugPrint('Rust callback called with: $msg');
         // You can also setState here if you like
         return 'ok';
-        },
-      );
-      return;
+      },
+    );
+    return;
   }
 
   Future<void> _testCanFail() async {
@@ -164,16 +164,16 @@ class _MyHomePageState extends State<MyHomePage> {
       _random = value;
       _counter++;
       _greeting = greet(name: 'Rusted $_counter');
-      _resp = resp; 
-      _db = db; 
+      _resp = resp;
+      _db = db;
     });
   }
 
   @override
-    void initState() {
-      super.initState();
-      _loadGreeting();
-    }
+  void initState() {
+    super.initState();
+    _loadGreeting();
+  }
 
   void _loadGreeting() {
     final result = greet(name: 'Mario');
@@ -244,15 +244,15 @@ class _MyHomePageState extends State<MyHomePage> {
               style: Theme.of(context).textTheme.headlineMedium,
             ),
             FloatingActionButton(
-                onPressed: _testCallback,
-                tooltip: 'CALLBACK',
-                child: const Icon(Icons.timer),
-                ),
+              onPressed: _testCallback,
+              tooltip: 'CALLBACK',
+              child: const Icon(Icons.timer),
+            ),
             FloatingActionButton(
-                onPressed: _startStream,
-                tooltip: 'STREAM',
-                child: const Icon(Icons.play_arrow),
-                ),
+              onPressed: _startStream,
+              tooltip: 'STREAM',
+              child: const Icon(Icons.play_arrow),
+            ),
           ],
         ),
       ),
