@@ -323,11 +323,9 @@ packages:
   wallet_ffi:
     dependency: "direct main"
     description:
-      path: "."
-      ref: master
-      resolved-ref: a63fa53f4c4410cbece304ce3a73f0e3f666a1c4
-      url: "git@github.com:BitcreditProtocol/wallet-ffi.git"
-    source: git
+      path: "../wallet_ffi"
+      relative: true
+    source: path
     version: "0.0.1"
   web:
     dependency: transitive

@@ -10,6 +10,7 @@ void main() async {
   await RustLib.init();
 
   await initWalletFfi(conf: conf);
+  await initValueChannel();
   runApp(const MyApp());
 }
 
@@ -80,6 +81,8 @@ class _MyHomePageState extends State<MyHomePage> {
   String _resp = 'no resp yet';
   String _db = 'no db yet';
   StreamSubscription<int>? _sub;
+  StreamSubscription<Event>? _subEvent;
+  Event? _latestEvent;
   int _lastValue = 0;
   String _canFailVal = 'no value yet';
 
@@ -100,9 +103,27 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
+  void _startEvents() {
+    _subEvent?.cancel();
+    _subEvent = subscribeValueChannel().listen(
+      (value) {
+        setState(() {
+          _latestEvent = value;
+        });
+      },
+      onError: (err, stack) {
+        debugPrint('Stream error: $err');
+      },
+      onDone: () {
+        debugPrint('Stream done');
+      },
+    );
+  }
+
   @override
   void dispose() {
     _sub?.cancel();
+    _subEvent?.cancel();
     super.dispose();
   }
 
@@ -237,21 +258,32 @@ class _MyHomePageState extends State<MyHomePage> {
             Text(_resp),
             Text(_db),
             Text('Last value from stream: $_lastValue'),
+            Text(
+              'Latest Event from stream - kind: ${_latestEvent?.kind.toString()}, msg: ${_latestEvent?.msg}',
+            ),
             Text('Result from canFail: $_canFailVal'),
             const Text('You have pushed the button this many times:'),
             Text(
               '$_counter',
               style: Theme.of(context).textTheme.headlineMedium,
             ),
+            const SizedBox(height: 16),
             FloatingActionButton(
               onPressed: _testCallback,
               tooltip: 'CALLBACK',
               child: const Icon(Icons.timer),
             ),
+            const SizedBox(height: 16),
             FloatingActionButton(
               onPressed: _startStream,
               tooltip: 'STREAM',
               child: const Icon(Icons.play_arrow),
+            ),
+            const SizedBox(height: 16),
+            FloatingActionButton(
+              onPressed: _startEvents,
+              tooltip: 'STREAM EVENTS',
+              child: const Icon(Icons.cookie),
             ),
           ],
         ),
