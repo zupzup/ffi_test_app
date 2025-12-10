@@ -6,17 +6,23 @@ import 'dart:async';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final dbDir = await getDatabaseDir();
-  final conf = WalletFfiConfig(dbFolderPath: dbDir);
+  final conf = WalletFfiConfig(dbFolderPath: dbDir, logLevel: "debug");
+  debugPrint('Rust init');
   await RustLib.init();
 
-  await initWalletFfi(conf: conf);
-  await initValueChannel();
+  debugPrint('Wallet init');
+  try {
+    await initWalletFfi(conf: conf);
+  } catch (e, st) {
+    debugPrint('Unexpected error on INIT: $e\n$st');
+  }
+  debugPrint('Init Done - running!');
   runApp(const MyApp());
 }
 
 Future<String> getDatabaseDir() async {
   final dir = await getApplicationSupportDirectory();
-  final dbPath = '${dir.path}/wallet-data.redb';
+  final dbPath = '${dir.path}/wallet-data.db';
 
   // Ensure folder exists
   await dir.create(recursive: true);
@@ -74,133 +80,54 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  final TextEditingController _controller = TextEditingController();
-  int _counter = 0;
-  String _greeting = '..waiting for Rust..';
-  double? _random;
-  String _resp = 'no resp yet';
-  String _db = 'no db yet';
-  StreamSubscription<int>? _sub;
-  StreamSubscription<Event>? _subEvent;
-  Event? _latestEvent;
-  int _lastValue = 0;
-  String _canFailVal = 'no value yet';
-
-  void _startStream() {
-    _sub?.cancel();
-    _sub = startNumberStream().listen(
-      (value) {
-        setState(() {
-          _lastValue = value;
-        });
-      },
-      onError: (err, stack) {
-        debugPrint('Stream error: $err');
-      },
-      onDone: () {
-        debugPrint('Stream done');
-      },
-    );
-  }
-
-  void _startEvents() {
-    _subEvent?.cancel();
-    _subEvent = subscribeValueChannel().listen(
-      (value) {
-        setState(() {
-          _latestEvent = value;
-        });
-      },
-      onError: (err, stack) {
-        debugPrint('Stream error: $err');
-      },
-      onDone: () {
-        debugPrint('Stream done');
-      },
-    );
-  }
+  BigInt _walletId = BigInt.from(0);
+  List<BigInt> _wallets = [];
 
   @override
   void dispose() {
-    _sub?.cancel();
-    _subEvent?.cancel();
     super.dispose();
   }
 
-  Future<void> _testCallback() async {
-    await callMeBaby(
-      cb: (msg) {
-        debugPrint('Rust callback called with: $msg');
-        // You can also setState here if you like
-        return 'ok';
-      },
-    );
-    return;
-  }
-
-  Future<void> _testCanFail() async {
+  Future<void> _getWalletIds() async {
     try {
-      final text = _controller.text.trim();
-
-      if (text.isEmpty) {
-        return;
-      }
-
-      final num = int.tryParse(text);
-      if (num == null) {
-        return;
-      }
-      final req = CanFailRequest(num: num);
-      final resp = await canFail(req: req);
-      debugPrint('Success: ${resp.res}');
+      debugPrint('Calling Get Wallet ids');
+      final res = await walletGetIds();
+      debugPrint('GET WALLET IDS CALLED, RES: ${res.ids}');
       setState(() {
-        _canFailVal = resp.res;
+        _wallets = res.ids;
       });
     } on WalletError catch (e) {
-      switch (e.kind) {
-        case WalletErrorKind.notFound:
-          debugPrint('Not found, ${e.msg}');
-          break;
-        case WalletErrorKind.io:
-          debugPrint('IO error: ${e.msg}');
-          break;
-        case WalletErrorKind.network:
-          debugPrint('Network error: ${e.msg}');
-          break;
-        case WalletErrorKind.other:
-          debugPrint('Other error: ${e.msg}');
-          break;
-      }
+      debugPrint('Error, ${e.msg}, ${e.kind}');
     } catch (e, st) {
       debugPrint('Unexpected error: $e\n$st');
     }
   }
 
-  Future<void> _loadRandom() async {
-    final value = await randomNumber();
-    final resp = await doReq();
-    final db = await doDbQuery();
+  Future<void> _addWallet() async {
+    try {
+      final req = AddWalletRequest(
+        name: "alice",
+        mnemonic:
+            "voice hotel dance cinnamon casino federal unhappy enrich legend forum aunt slam",
+        mintUrl: "https://wildcat-dev-docker.minibill.tech",
+      );
 
-    setState(() {
-      _random = value;
-      _counter++;
-      _greeting = greet(name: 'Rusted $_counter');
-      _resp = resp;
-      _db = db;
-    });
+      debugPrint('Calling Add Wallet');
+      final res = await walletAdd(req: req);
+      debugPrint('ADD WALLET CALLED, WALLET ID: $res.walletId');
+      setState(() {
+        _walletId = res.walletId;
+      });
+    } on WalletError catch (e) {
+      debugPrint('Error, ${e.msg}, ${e.kind}');
+    } catch (e, st) {
+      debugPrint('Unexpected error: $e\n$st');
+    }
   }
 
   @override
   void initState() {
     super.initState();
-    _loadGreeting();
-  }
-
-  void _loadGreeting() {
-    final result = greet(name: 'Mario');
-    setState(() {
-      _greeting = result;
-    });
   }
 
   @override
@@ -240,58 +167,22 @@ class _MyHomePageState extends State<MyHomePage> {
           // wireframe for each widget.
           mainAxisAlignment: .center,
           children: [
-            TextField(
-              controller: _controller,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                border: OutlineInputBorder(),
-                labelText: 'Enter a number',
-              ),
-            ),
             const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: _testCanFail,
-              child: const Text("Call can_fail"),
-            ),
-            Text(_random?.toString() ?? 'Press the button for a random number'),
-            Text(_greeting),
-            Text(_resp),
-            Text(_db),
-            Text('Last value from stream: $_lastValue'),
-            Text(
-              'Latest Event from stream - kind: ${_latestEvent?.kind.toString()}, msg: ${_latestEvent?.msg}',
-            ),
-            Text('Result from canFail: $_canFailVal'),
-            const Text('You have pushed the button this many times:'),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-            const SizedBox(height: 16),
+            Text('Hello Wallet - Click to Add Wallet'),
+            Text('Wallet ID: $_walletId'),
+            Text('Wallet IDs: $_wallets'),
             FloatingActionButton(
-              onPressed: _testCallback,
-              tooltip: 'CALLBACK',
-              child: const Icon(Icons.timer),
+              onPressed: _addWallet,
+              tooltip: 'WALLET',
+              child: const Icon(Icons.wallet),
             ),
-            const SizedBox(height: 16),
             FloatingActionButton(
-              onPressed: _startStream,
-              tooltip: 'STREAM',
-              child: const Icon(Icons.play_arrow),
-            ),
-            const SizedBox(height: 16),
-            FloatingActionButton(
-              onPressed: _startEvents,
-              tooltip: 'STREAM EVENTS',
-              child: const Icon(Icons.cookie),
+              onPressed: _getWalletIds,
+              tooltip: 'IDS',
+              child: const Icon(Icons.list),
             ),
           ],
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _loadRandom,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
       ),
     );
   }

@@ -35,15 +35,15 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
 
-  # wallet_ffi:
-  #   path: ../wallet_ffi
+  wallet_ffi:
+    path: ../wallet_ffi
 
   path_provider: ^2.1.2
 
-  wallet_ffi:
-    git:
-      url: git@github.com:BitcreditProtocol/wallet-ffi.git
-      ref: master
+  # wallet_ffi:
+  #   git:
+  #     url: git@github.com:BitcreditProtocol/wallet-ffi.git
+  #     ref: master
 
 dev_dependencies:
   flutter_test:
