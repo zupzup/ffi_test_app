@@ -6,7 +6,13 @@ import 'dart:async';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final dbDir = await getDatabaseDir();
-  final conf = WalletFfiConfig(dbFolderPath: dbDir, logLevel: "debug");
+  final conf = WalletFfiConfig(
+    dbFolderPath: dbDir,
+    logLevel: "debug",
+    jobIntervalSecs: BigInt.from(10),
+    jobInitialDelaySecs: BigInt.from(5),
+    defaultMintUrl: "https://mint.wildcat0.clowder1.minibill.tech",
+  );
   debugPrint('Rust init');
   await RustLib.init();
 
@@ -22,7 +28,7 @@ void main() async {
 
 Future<String> getDatabaseDir() async {
   final dir = await getApplicationSupportDirectory();
-  final dbPath = '${dir.path}/wallet-data.db';
+  final dbPath = '${dir.path}/wallet-data_4.db';
 
   // Ensure folder exists
   await dir.create(recursive: true);
@@ -103,18 +109,29 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
+  Future<void> _getWalletName() async {
+    try {
+      debugPrint('Calling Get Wallet ids');
+      final req = WalletRequest(walletId: _walletId);
+      final res = await walletGetName(req: req);
+      debugPrint('GET WALLET NAME CALLED, RES: ${res.name}');
+    } on WalletError catch (e) {
+      debugPrint('Error, ${e.msg}, ${e.kind}');
+    } catch (e, st) {
+      debugPrint('Unexpected error: $e\n$st');
+    }
+  }
+
   Future<void> _addWallet() async {
     try {
       final req = AddWalletRequest(
-        name: "alice",
         mnemonic:
             "voice hotel dance cinnamon casino federal unhappy enrich legend forum aunt slam",
-        mintUrl: "https://wildcat-dev-docker.minibill.tech",
       );
 
       debugPrint('Calling Add Wallet');
       final res = await walletAdd(req: req);
-      debugPrint('ADD WALLET CALLED, WALLET ID: $res.walletId');
+      debugPrint('ADD WALLET CALLED, WALLET ID: ${res.walletId}');
       setState(() {
         _walletId = res.walletId;
       });
@@ -180,6 +197,11 @@ class _MyHomePageState extends State<MyHomePage> {
               onPressed: _getWalletIds,
               tooltip: 'IDS',
               child: const Icon(Icons.list),
+            ),
+            FloatingActionButton(
+              onPressed: _getWalletName,
+              tooltip: 'NAME',
+              child: const Icon(Icons.note),
             ),
           ],
         ),
