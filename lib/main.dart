@@ -11,7 +11,7 @@ void main() async {
     logLevel: "debug",
     jobIntervalSecs: BigInt.from(10),
     jobInitialDelaySecs: BigInt.from(5),
-    defaultMintUrl: "https://mint.wildcat0.clowder1.minibill.tech",
+    defaultMintUrl: "https://wildcat-dev-docker.minibill.tech",
   );
   debugPrint('Rust init');
   await RustLib.init();
@@ -28,7 +28,7 @@ void main() async {
 
 Future<String> getDatabaseDir() async {
   final dir = await getApplicationSupportDirectory();
-  final dbPath = '${dir.path}/wallet-data_4.db';
+  final dbPath = '${dir.path}/wallet-data_6.db';
 
   // Ensure folder exists
   await dir.create(recursive: true);
@@ -94,6 +94,29 @@ class _MyHomePageState extends State<MyHomePage> {
     super.dispose();
   }
 
+  Future<void> _payByToken() async {
+    try {
+      debugPrint('Calling pay by token');
+      final req = WalletPreparePaymentByTokenRequest(
+        walletId: _walletId,
+        amount: BigInt.from(100),
+        unit: "sat",
+        description: "hi",
+      );
+      final prep = await walletPreparePayByToken(req: req);
+      debugPrint('PREP BY TOKEN CALLED, RES: ${prep.paymentSummary.requestId}');
+      final payReq = WalletPaymentByTokenRequest(
+        rid: prep.paymentSummary.requestId,
+      );
+      final res = await walletPayByToken(req: payReq);
+      debugPrint('GOT TOKEN, RES: ${res.token}');
+    } on WalletError catch (e) {
+      debugPrint('Error, ${e.msg}, ${e.kind}');
+    } catch (e, st) {
+      debugPrint('Unexpected error: $e\n$st');
+    }
+  }
+
   Future<void> _getWalletIds() async {
     try {
       debugPrint('Calling Get Wallet ids');
@@ -124,13 +147,13 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Future<void> _addWallet() async {
     try {
-      final req = AddWalletRequest(
+      final req = RestoreWalletRequest(
         mnemonic:
-            "voice hotel dance cinnamon casino federal unhappy enrich legend forum aunt slam",
+            "royal scheme canoe flame sell jewel valve citizen deal patch stereo walk",
       );
 
       debugPrint('Calling Add Wallet');
-      final res = await walletAdd(req: req);
+      final res = await walletRestore(req: req);
       debugPrint('ADD WALLET CALLED, WALLET ID: ${res.walletId}');
       setState(() {
         _walletId = res.walletId;
@@ -202,6 +225,11 @@ class _MyHomePageState extends State<MyHomePage> {
               onPressed: _getWalletName,
               tooltip: 'NAME',
               child: const Icon(Icons.note),
+            ),
+            FloatingActionButton(
+              onPressed: _payByToken,
+              tooltip: 'TOKEN',
+              child: const Icon(Icons.token),
             ),
           ],
         ),
