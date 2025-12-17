@@ -5,24 +5,9 @@ import 'dart:async';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  final dbDir = await getDatabaseDir();
-  final conf = WalletFfiConfig(
-    dbFolderPath: dbDir,
-    logLevel: "debug",
-    jobIntervalSecs: BigInt.from(10),
-    jobInitialDelaySecs: BigInt.from(5),
-    defaultMintUrl: "https://wildcat-dev-docker.minibill.tech",
-  );
   debugPrint('Rust init');
   await RustLib.init();
 
-  debugPrint('Wallet init');
-  try {
-    await initWalletFfi(conf: conf);
-  } catch (e, st) {
-    debugPrint('Unexpected error on INIT: $e\n$st');
-  }
-  debugPrint('Init Done - running!');
   runApp(const MyApp());
 }
 
@@ -86,12 +71,47 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  final TextEditingController _controller = TextEditingController();
   BigInt _walletId = BigInt.from(0);
   List<BigInt> _wallets = [];
 
   @override
   void dispose() {
     super.dispose();
+  }
+
+  Future<void> _initFfi() async {
+    debugPrint('Wallet init');
+    final dbDir = await getDatabaseDir();
+    final conf = WalletFfiConfig(
+      dbFolderPath: dbDir,
+      logLevel: "debug",
+      jobIntervalSecs: BigInt.from(10),
+      jobInitialDelaySecs: BigInt.from(5),
+      defaultMintUrl: "https://wildcat-dev-docker.minibill.tech",
+    );
+    try {
+      await initWalletFfi(conf: conf);
+    } catch (e, st) {
+      debugPrint('Unexpected error on INIT: $e\n$st');
+    }
+    debugPrint('Init Done - running!');
+  }
+
+  Future<void> _receiveToken() async {
+    try {
+      final text = _controller.text.trim();
+
+      if (text.isEmpty) {
+        return;
+      }
+      final req = WalletReceiveRequest(walletId: _walletId, token: text);
+      await walletReceive(req: req);
+    } on WalletError catch (e) {
+      debugPrint('Error, ${e.msg}, ${e.kind}');
+    } catch (e, st) {
+      debugPrint('Unexpected error: $e\n$st');
+    }
   }
 
   Future<void> _payByToken() async {
@@ -212,6 +232,11 @@ class _MyHomePageState extends State<MyHomePage> {
             Text('Wallet ID: $_walletId'),
             Text('Wallet IDs: $_wallets'),
             FloatingActionButton(
+              onPressed: _initFfi,
+              tooltip: 'INIT',
+              child: const Icon(Icons.start),
+            ),
+            FloatingActionButton(
               onPressed: _addWallet,
               tooltip: 'WALLET',
               child: const Icon(Icons.wallet),
@@ -230,6 +255,20 @@ class _MyHomePageState extends State<MyHomePage> {
               onPressed: _payByToken,
               tooltip: 'TOKEN',
               child: const Icon(Icons.token),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _controller,
+              keyboardType: TextInputType.text,
+              decoration: const InputDecoration(
+                border: OutlineInputBorder(),
+                labelText: 'Enter a token',
+              ),
+            ),
+            FloatingActionButton(
+              onPressed: _receiveToken,
+              tooltip: 'RECEIVETOKEN',
+              child: const Icon(Icons.receipt),
             ),
           ],
         ),
