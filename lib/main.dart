@@ -13,7 +13,7 @@ void main() async {
 
 Future<String> getDatabaseDir() async {
   final dir = await getApplicationSupportDirectory();
-  final dbPath = '${dir.path}/wallet-data_6.db';
+  final dbPath = '${dir.path}/wallet-data_7.db';
 
   // Ensure folder exists
   await dir.create(recursive: true);
@@ -73,6 +73,8 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   final TextEditingController _controller = TextEditingController();
   BigInt _walletId = BigInt.from(0);
+  BigInt _debit = BigInt.from(0);
+  BigInt _credit = BigInt.from(0);
   List<BigInt> _wallets = [];
 
   @override
@@ -89,6 +91,11 @@ class _MyHomePageState extends State<MyHomePage> {
       jobIntervalSecs: BigInt.from(10),
       jobInitialDelaySecs: BigInt.from(5),
       defaultMintUrl: "https://wildcat-dev-docker.minibill.tech",
+      bitcoinNetwork: "testnet",
+      mnemonic:
+          "royal scheme canoe flame sell jewel valve citizen deal patch stereo walk",
+      nostrRelays: ["wss://bcr-relay-dev.minibill.tech"],
+      useSameMintSafeMode: false,
     );
     try {
       await initWalletFfi(conf: conf);
@@ -152,12 +159,16 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
-  Future<void> _getWalletName() async {
+  Future<void> _getWalletBalance() async {
     try {
       debugPrint('Calling Get Wallet ids');
       final req = WalletRequest(walletId: _walletId);
-      final res = await walletGetName(req: req);
-      debugPrint('GET WALLET NAME CALLED, RES: ${res.name}');
+      final res = await walletGetBalance(req: req);
+      setState(() {
+        _debit = res.debit;
+        _credit = res.credit;
+      });
+      debugPrint('GET WALLET BALANCE CALLED, RES: $res');
     } on WalletError catch (e) {
       debugPrint('Error, ${e.msg}, ${e.kind}');
     } catch (e, st) {
@@ -165,19 +176,27 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
-  Future<void> _addWallet() async {
+  Future<void> _restoreWallet() async {
     try {
-      final req = RestoreWalletRequest(
-        mnemonic:
-            "royal scheme canoe flame sell jewel valve citizen deal patch stereo walk",
-      );
-
       debugPrint('Calling Add Wallet');
-      final res = await walletRestore(req: req);
-      debugPrint('ADD WALLET CALLED, WALLET ID: ${res.walletId}');
+      final res = await walletRestore();
+      debugPrint('RESTORE WALLET CALLED, WALLET ID: ${res.walletId}');
       setState(() {
         _walletId = res.walletId;
       });
+    } on WalletError catch (e) {
+      debugPrint('Error, ${e.msg}, ${e.kind}');
+    } catch (e, st) {
+      debugPrint('Unexpected error: $e\n$st');
+    }
+  }
+
+  Future<void> _deleteWallet() async {
+    try {
+      debugPrint('Calling Add Wallet');
+      final req = WalletRequest(walletId: _walletId);
+      await walletDelete(req: req);
+      debugPrint('DELETE WALLET CALLED, WALLET ID: $_walletId');
     } on WalletError catch (e) {
       debugPrint('Error, ${e.msg}, ${e.kind}');
     } catch (e, st) {
@@ -228,33 +247,45 @@ class _MyHomePageState extends State<MyHomePage> {
           mainAxisAlignment: .center,
           children: [
             const SizedBox(height: 16),
-            Text('Hello Wallet - Click to Add Wallet'),
             Text('Wallet ID: $_walletId'),
             Text('Wallet IDs: $_wallets'),
-            FloatingActionButton(
+            Text('Credit Balance: $_credit'),
+            Text('Debit Balance: $_debit'),
+            FloatingActionButton.extended(
               onPressed: _initFfi,
               tooltip: 'INIT',
-              child: const Icon(Icons.start),
+              label: Text("Init"),
+              icon: const Icon(Icons.start),
             ),
-            FloatingActionButton(
-              onPressed: _addWallet,
+            FloatingActionButton.extended(
+              onPressed: _restoreWallet,
               tooltip: 'WALLET',
-              child: const Icon(Icons.wallet),
+              label: Text("Restore Wallet"),
+              icon: const Icon(Icons.wallet),
             ),
-            FloatingActionButton(
+            FloatingActionButton.extended(
+              onPressed: _deleteWallet,
+              tooltip: 'DELETE WALLET',
+              label: Text("Delete Wallet"),
+              icon: const Icon(Icons.delete),
+            ),
+            FloatingActionButton.extended(
               onPressed: _getWalletIds,
               tooltip: 'IDS',
-              child: const Icon(Icons.list),
+              label: Text("Get Wallet IDS"),
+              icon: const Icon(Icons.list),
             ),
-            FloatingActionButton(
-              onPressed: _getWalletName,
-              tooltip: 'NAME',
-              child: const Icon(Icons.note),
+            FloatingActionButton.extended(
+              onPressed: _getWalletBalance,
+              tooltip: 'BALANCE',
+              label: Text("Get Wallet Balance"),
+              icon: const Icon(Icons.balance),
             ),
-            FloatingActionButton(
+            FloatingActionButton.extended(
               onPressed: _payByToken,
               tooltip: 'TOKEN',
-              child: const Icon(Icons.token),
+              label: Text("Pay by Token"),
+              icon: const Icon(Icons.token),
             ),
             const SizedBox(height: 16),
             TextField(
@@ -265,10 +296,11 @@ class _MyHomePageState extends State<MyHomePage> {
                 labelText: 'Enter a token',
               ),
             ),
-            FloatingActionButton(
+            FloatingActionButton.extended(
               onPressed: _receiveToken,
               tooltip: 'RECEIVETOKEN',
-              child: const Icon(Icons.receipt),
+              label: Text('Receive Token'),
+              icon: const Icon(Icons.receipt),
             ),
           ],
         ),
