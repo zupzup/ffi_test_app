@@ -90,7 +90,8 @@ class _MyHomePageState extends State<MyHomePage> {
       logLevel: "debug",
       jobIntervalSecs: BigInt.from(10),
       jobInitialDelaySecs: BigInt.from(5),
-      defaultMintUrl: "https://wildcat-dev-docker.minibill.tech",
+      // defaultMintUrl: "https://wildcat-dev-docker.minibill.tech",
+      defaultMintUrl: "https://mint.wildcat0.clowder1.minibill.tech",
       bitcoinNetwork: "testnet",
       mnemonic:
           "royal scheme canoe flame sell jewel valve citizen deal patch stereo walk",
@@ -103,6 +104,21 @@ class _MyHomePageState extends State<MyHomePage> {
       debugPrint('Unexpected error on INIT: $e\n$st');
     }
     debugPrint('Init Done - running!');
+  }
+
+  Future<void> _loadTxs() async {
+    try {
+      final req = WalletRequest(walletId: _walletId);
+      final txs = await walletGetTransactions(req: req);
+      for (int i = 0; i < txs.txs.length; i++) {
+        var tx = txs.txs[i];
+        debugPrint('TX: ${tx.tstamp}');
+      }
+    } on WalletError catch (e) {
+      debugPrint('Error, ${e.msg}, ${e.kind}');
+    } catch (e, st) {
+      debugPrint('Unexpected error: $e\n$st');
+    }
   }
 
   Future<void> _receiveToken() async {
@@ -301,6 +317,12 @@ class _MyHomePageState extends State<MyHomePage> {
               tooltip: 'RECEIVETOKEN',
               label: Text('Receive Token'),
               icon: const Icon(Icons.receipt),
+            ),
+            FloatingActionButton.extended(
+              onPressed: _loadTxs,
+              tooltip: 'LOADTX',
+              label: Text('Load Transactions'),
+              icon: const Icon(Icons.list_sharp),
             ),
           ],
         ),
