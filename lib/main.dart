@@ -106,6 +106,17 @@ class _MyHomePageState extends State<MyHomePage> {
     debugPrint('Init Done - running!');
   }
 
+  Future<void> _getVersion() async {
+    try {
+      final st = await walletGetStatus();
+      debugPrint('APP VERSION: ${st.appVersion}');
+    } on WalletError catch (e) {
+      debugPrint('Error, ${e.msg}, ${e.kind}');
+    } catch (e, st) {
+      debugPrint('Unexpected error: $e\n$st');
+    }
+  }
+
   Future<void> _loadTxs() async {
     try {
       final req = WalletRequest(walletId: _walletId);
@@ -322,6 +333,12 @@ class _MyHomePageState extends State<MyHomePage> {
               onPressed: _loadTxs,
               tooltip: 'LOADTX',
               label: Text('Load Transactions'),
+              icon: const Icon(Icons.list_sharp),
+            ),
+            FloatingActionButton.extended(
+              onPressed: _getVersion,
+              tooltip: 'GETVERSION',
+              label: Text('Get Version'),
               icon: const Icon(Icons.list_sharp),
             ),
           ],

@@ -326,7 +326,7 @@ packages:
       path: "../wallet_ffi"
       relative: true
     source: path
-    version: "0.0.1"
+    version: "0.7.7"
   web:
     dependency: transitive
     description:
