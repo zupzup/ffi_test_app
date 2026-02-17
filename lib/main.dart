@@ -205,7 +205,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Future<void> _restoreWallet() async {
     try {
-      debugPrint('Calling Add Wallet');
+      debugPrint('Calling Restore Wallet');
       final res = await walletRestore();
       debugPrint('RESTORE WALLET CALLED, WALLET ID: ${res.walletId}');
       setState(() {
