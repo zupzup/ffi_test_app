@@ -36,7 +36,7 @@ dependencies:
   cupertino_icons: ^1.0.8
 
   wallet_ffi:
-    path: ../wallet_ffi
+    path: ../Wallet-Core
 
   path_provider: ^2.1.2
 

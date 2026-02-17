@@ -323,10 +323,10 @@ packages:
   wallet_ffi:
     dependency: "direct main"
     description:
-      path: "../wallet_ffi"
+      path: "../Wallet-Core"
       relative: true
     source: path
-    version: "0.7.9"
+    version: "0.8.0"
   web:
     dependency: transitive
     description:

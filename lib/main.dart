@@ -160,6 +160,7 @@ class _MyHomePageState extends State<MyHomePage> {
       final prep = await walletPreparePayByToken(req: req);
       debugPrint('PREP BY TOKEN CALLED, RES: ${prep.paymentSummary.requestId}');
       final payReq = WalletPaymentByTokenRequest(
+        walletId: _walletId,
         rid: prep.paymentSummary.requestId,
       );
       final res = await walletPayByToken(req: payReq);
