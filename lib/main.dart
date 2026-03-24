@@ -75,6 +75,7 @@ class _MyHomePageState extends State<MyHomePage> {
   BigInt _walletId = BigInt.from(0);
   BigInt _debit = BigInt.from(0);
   BigInt _credit = BigInt.from(0);
+  late WalletPaymentCheckHandle _cancelHandle;
   List<BigInt> _wallets = [];
 
   @override
@@ -88,14 +89,14 @@ class _MyHomePageState extends State<MyHomePage> {
     final conf = WalletFfiConfig(
       dbFolderPath: dbDir,
       logLevel: "debug",
-      jobIntervalSecs: BigInt.from(10),
-      jobInitialDelaySecs: BigInt.from(5),
+      jobIntervalSecs: BigInt.from(60),
+      jobInitialDelaySecs: BigInt.from(60),
       // defaultMintUrl: "https://wildcat-dev-docker.minibill.tech",
       defaultMintUrl: "https://mint.wildcat0.clowder1.minibill.tech",
       bitcoinNetwork: "testnet",
       mnemonic:
           "royal scheme canoe flame sell jewel valve citizen deal patch stereo walk",
-      nostrRelays: ["wss://bcr-relay-dev.minibill.tech"],
+      nostrRelays: ["wss://relay.wildcat0.clowder-dev.minibill.tech"],
       useSameMintSafeMode: false,
     );
     try {
@@ -104,6 +105,46 @@ class _MyHomePageState extends State<MyHomePage> {
       debugPrint('Unexpected error on INIT: $e\n$st');
     }
     debugPrint('Init Done - running!');
+  }
+
+  Future<void> _checkPayment() async {
+    try {
+      final req = WalletPreparePaymentReqRequest(
+        walletId: _walletId,
+        amount: BigInt.from(100),
+        unit: "sat",
+        description: "hi",
+      );
+      final st = await walletPreparePaymentRequest(req: req);
+      debugPrint('Req: ${st.paymentRequest.request}');
+      final waitReq = WalletCheckReceivedPaymentRequest(
+        walletId: _walletId,
+        maxWaitSec: BigInt.from(60),
+        pId: st.paymentRequest.pId,
+      );
+      final handle = await walletCheckReceivedPayment(
+        req: waitReq,
+        resultCallback: (res) {
+          debugPrint('Result: ${res.txId}');
+        },
+      );
+      _cancelHandle = handle;
+    } on WalletError catch (e) {
+      debugPrint('Error, ${e.msg}, ${e.kind}');
+    } catch (e, st) {
+      debugPrint('Unexpected error: $e\n$st');
+    }
+  }
+
+  Future<void> _cancelCheckPayment() async {
+    try {
+      await _cancelHandle.cancel();
+      debugPrint('CANCELLED CHECK PAYMENT');
+    } on WalletError catch (e) {
+      debugPrint('Error, ${e.msg}, ${e.kind}');
+    } catch (e, st) {
+      debugPrint('Unexpected error: $e\n$st');
+    }
   }
 
   Future<void> _getVersion() async {
@@ -341,6 +382,18 @@ class _MyHomePageState extends State<MyHomePage> {
               tooltip: 'GETVERSION',
               label: Text('Get Version'),
               icon: const Icon(Icons.list_sharp),
+            ),
+            FloatingActionButton.extended(
+              onPressed: _checkPayment,
+              tooltip: 'CHECKPAYMENT',
+              label: Text('Check For Payment'),
+              icon: const Icon(Icons.threesixty_sharp),
+            ),
+            FloatingActionButton.extended(
+              onPressed: _cancelCheckPayment,
+              tooltip: 'CANCELCHECKPAYMENT',
+              label: Text('Cancel Check For Payment'),
+              icon: const Icon(Icons.cancel_sharp),
             ),
           ],
         ),
