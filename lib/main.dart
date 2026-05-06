@@ -72,11 +72,11 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   final TextEditingController _controller = TextEditingController();
-  BigInt _walletId = BigInt.from(0);
+  String _walletId = "";
   BigInt _debit = BigInt.from(0);
   BigInt _credit = BigInt.from(0);
   late WalletPaymentCheckHandle _cancelHandle;
-  List<BigInt> _wallets = [];
+  List<String> _wallets = [];
 
   @override
   void dispose() {
@@ -91,13 +91,9 @@ class _MyHomePageState extends State<MyHomePage> {
       logLevel: "debug",
       jobIntervalSecs: BigInt.from(60),
       jobInitialDelaySecs: BigInt.from(60),
-      // defaultMintUrl: "https://wildcat-dev-docker.minibill.tech",
-      defaultMintUrl: "https://mint.wildcat0.clowder1.minibill.tech",
-      bitcoinNetwork: "testnet",
-      mnemonic:
-          "royal scheme canoe flame sell jewel valve citizen deal patch stereo walk",
-      nostrRelays: ["wss://relay.wildcat0.clowder-dev.minibill.tech"],
-      useSameMintSafeMode: false,
+      devMode: false,
+      swapExpiryMinutes: 15,
+      mnemonics: { 'ddfb860cf982e17b6a45ce073823bf722d903c8a176de99e786c7f8b582dd6d6': 'where column disagree gesture define tooth column inner divide logic pottery memory'},
     );
     try {
       await initWalletFfi(conf: conf);
@@ -195,7 +191,6 @@ class _MyHomePageState extends State<MyHomePage> {
       final req = WalletPreparePaymentByTokenRequest(
         walletId: _walletId,
         amount: BigInt.from(100),
-        unit: "sat",
         description: "hi",
       );
       final prep = await walletPreparePayByToken(req: req);
@@ -248,7 +243,14 @@ class _MyHomePageState extends State<MyHomePage> {
   Future<void> _restoreWallet() async {
     try {
       debugPrint('Calling Restore Wallet');
-      final res = await walletRestore();
+      final cfg = CreateWalletRequest(
+          defaultMintUrl: "https://mint.wildcat0.clowder-dev.minibill.tech",
+          bitcoinNetwork: "testnet",
+          mnemonic:
+          "royal scheme canoe flame sell jewel valve citizen deal patch stereo walk",
+          nostrRelays: ["wss://relay.wildcat0.clowder-dev.minibill.tech", "wss://relay.wildcat1.clowder-dev.minibill.tech"],
+      );
+      final res = await walletRestore(req: cfg);
       debugPrint('RESTORE WALLET CALLED, WALLET ID: ${res.walletId}');
       setState(() {
         _walletId = res.walletId;
