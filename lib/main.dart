@@ -246,8 +246,7 @@ class _MyHomePageState extends State<MyHomePage> {
       final cfg = CreateWalletRequest(
           defaultMintUrl: "https://mint.wildcat0.clowder-dev.minibill.tech",
           bitcoinNetwork: "testnet",
-          mnemonic:
-          "royal scheme canoe flame sell jewel valve citizen deal patch stereo walk",
+          mnemonic: "where column disagree gesture define tooth column inner divide logic pottery memory",
           nostrRelays: ["wss://relay.wildcat0.clowder-dev.minibill.tech", "wss://relay.wildcat1.clowder-dev.minibill.tech"],
       );
       final res = await walletRestore(req: cfg);
