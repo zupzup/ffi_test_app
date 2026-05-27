@@ -156,7 +156,9 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Future<void> _loadTxs() async {
     try {
-      final req = WalletRequest(walletId: _walletId);
+      final filter = TransactionFilters(paymentTypes: [], statuses: [], direction: null, timeRange: null);
+      final sort = TransactionSort.timeAsc;
+      final req = WalletListTransactionsRequest(walletId: _walletId, filter: filter, limit: BigInt.from(5), cursor: null, sort: sort);
       final txs = await walletGetTransactions(req: req);
       for (int i = 0; i < txs.txs.length; i++) {
         var tx = txs.txs[i];
