@@ -326,7 +326,7 @@ packages:
       path: "../Wallet-Core"
       relative: true
     source: path
-    version: "0.9.3"
+    version: "0.9.6"
   web:
     dependency: transitive
     description:

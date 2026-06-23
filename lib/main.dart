@@ -246,6 +246,7 @@ class _MyHomePageState extends State<MyHomePage> {
     try {
       debugPrint('Calling Restore Wallet');
       final cfg = CreateWalletRequest(
+          name: "myownwallet",
           defaultMintUrl: "https://mint.wildcat0.clowder-dev.minibill.tech",
           bitcoinNetwork: "testnet",
           mnemonic: "where column disagree gesture define tooth column inner divide logic pottery memory",
