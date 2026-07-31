@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:wallet_ffi/wallet_ffi.dart';
+import 'package:ebill_flutter_ffi/ebill_flutter_ffi.dart';
 import 'package:path_provider/path_provider.dart';
 import 'dart:async';
 
@@ -71,206 +71,34 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  final TextEditingController _controller = TextEditingController();
-  String _walletId = "";
-  BigInt _debit = BigInt.from(0);
-  BigInt _credit = BigInt.from(0);
-  late WalletPaymentCheckHandle _cancelHandle;
-  List<String> _wallets = [];
-
   @override
   void dispose() {
     super.dispose();
   }
 
   Future<void> _initFfi() async {
-    debugPrint('Wallet init');
+    debugPrint('E-Bill init');
     final dbDir = await getDatabaseDir();
-    final conf = WalletFfiConfig(
+    final conf = EbillConfig(
       dbFolderPath: dbDir,
       logLevel: "debug",
+      devMode: false,
       jobIntervalSecs: BigInt.from(60),
       jobInitialDelaySecs: BigInt.from(60),
-      devMode: false,
-      swapExpiryMinutes: 15,
-      mnemonics: { 'ddfb860cf982e17b6a45ce073823bf722d903c8a176de99e786c7f8b582dd6d6': 'where column disagree gesture define tooth column inner divide logic pottery memory'},
     );
     try {
-      await initWalletFfi(conf: conf);
+      await initEbillFfi(conf: conf);
     } catch (e, st) {
       debugPrint('Unexpected error on INIT: $e\n$st');
     }
     debugPrint('Init Done - running!');
   }
 
-  Future<void> _checkPayment() async {
-    try {
-      final req = WalletPreparePaymentReqRequest(
-        walletId: _walletId,
-        amount: BigInt.from(100),
-        unit: "sat",
-        description: "hi",
-      );
-      final st = await walletPreparePaymentRequest(req: req);
-      debugPrint('Req: ${st.paymentRequest.request}');
-      final waitReq = WalletCheckReceivedPaymentRequest(
-        walletId: _walletId,
-        maxWaitSec: BigInt.from(60),
-        pId: st.paymentRequest.pId,
-      );
-      final handle = await walletCheckReceivedPayment(
-        req: waitReq,
-        resultCallback: (res) {
-          debugPrint('Result: ${res.txId}');
-        },
-      );
-      _cancelHandle = handle;
-    } on WalletError catch (e) {
-      debugPrint('Error, ${e.msg}, ${e.kind}');
-    } catch (e, st) {
-      debugPrint('Unexpected error: $e\n$st');
-    }
-  }
-
-  Future<void> _cancelCheckPayment() async {
-    try {
-      await _cancelHandle.cancel();
-      debugPrint('CANCELLED CHECK PAYMENT');
-    } on WalletError catch (e) {
-      debugPrint('Error, ${e.msg}, ${e.kind}');
-    } catch (e, st) {
-      debugPrint('Unexpected error: $e\n$st');
-    }
-  }
-
   Future<void> _getVersion() async {
     try {
-      final st = await walletGetStatus();
+      final st = await getStatus();
       debugPrint('APP VERSION: ${st.appVersion}');
-    } on WalletError catch (e) {
-      debugPrint('Error, ${e.msg}, ${e.kind}');
-    } catch (e, st) {
-      debugPrint('Unexpected error: $e\n$st');
-    }
-  }
-
-  Future<void> _loadTxs() async {
-    try {
-      final filter = TransactionFilters(paymentTypes: [], statuses: [], direction: null, timeRange: null);
-      final sort = TransactionSort.timeAsc;
-      final req = WalletListTransactionsRequest(walletId: _walletId, filter: filter, limit: BigInt.from(5), cursor: null, sort: sort);
-      final txs = await walletGetTransactions(req: req);
-      for (int i = 0; i < txs.txs.length; i++) {
-        var tx = txs.txs[i];
-        debugPrint('TX: ${tx.tstamp}');
-      }
-    } on WalletError catch (e) {
-      debugPrint('Error, ${e.msg}, ${e.kind}');
-    } catch (e, st) {
-      debugPrint('Unexpected error: $e\n$st');
-    }
-  }
-
-  Future<void> _receiveToken() async {
-    try {
-      final text = _controller.text.trim();
-
-      if (text.isEmpty) {
-        return;
-      }
-      final req = WalletReceiveRequest(walletId: _walletId, token: text);
-      await walletReceive(req: req);
-    } on WalletError catch (e) {
-      debugPrint('Error, ${e.msg}, ${e.kind}');
-    } catch (e, st) {
-      debugPrint('Unexpected error: $e\n$st');
-    }
-  }
-
-  Future<void> _payByToken() async {
-    try {
-      debugPrint('Calling pay by token');
-      final req = WalletPreparePaymentByTokenRequest(
-        walletId: _walletId,
-        amount: BigInt.from(100),
-        description: "hi",
-      );
-      final prep = await walletPreparePayByToken(req: req);
-      debugPrint('PREP BY TOKEN CALLED, RES: ${prep.paymentSummary.requestId}');
-      final payReq = WalletPaymentByTokenRequest(
-        walletId: _walletId,
-        rid: prep.paymentSummary.requestId,
-      );
-      final res = await walletPayByToken(req: payReq);
-      debugPrint('GOT TOKEN, RES: ${res.token}');
-    } on WalletError catch (e) {
-      debugPrint('Error, ${e.msg}, ${e.kind}');
-    } catch (e, st) {
-      debugPrint('Unexpected error: $e\n$st');
-    }
-  }
-
-  Future<void> _getWalletIds() async {
-    try {
-      debugPrint('Calling Get Wallet ids');
-      final res = await walletGetIds();
-      debugPrint('GET WALLET IDS CALLED, RES: ${res.ids}');
-      setState(() {
-        _wallets = res.ids;
-      });
-    } on WalletError catch (e) {
-      debugPrint('Error, ${e.msg}, ${e.kind}');
-    } catch (e, st) {
-      debugPrint('Unexpected error: $e\n$st');
-    }
-  }
-
-  Future<void> _getWalletBalance() async {
-    try {
-      debugPrint('Calling Get Wallet ids');
-      final req = WalletRequest(walletId: _walletId);
-      final res = await walletGetBalance(req: req);
-      setState(() {
-        _debit = res.debit;
-        _credit = res.credit;
-      });
-      debugPrint('GET WALLET BALANCE CALLED, RES: $res');
-    } on WalletError catch (e) {
-      debugPrint('Error, ${e.msg}, ${e.kind}');
-    } catch (e, st) {
-      debugPrint('Unexpected error: $e\n$st');
-    }
-  }
-
-  Future<void> _restoreWallet() async {
-    try {
-      debugPrint('Calling Restore Wallet');
-      final cfg = CreateWalletRequest(
-          name: "myownwallet",
-          defaultMintUrl: "https://mint.wildcat0.clowder-dev.minibill.tech",
-          bitcoinNetwork: "testnet",
-          mnemonic: "where column disagree gesture define tooth column inner divide logic pottery memory",
-          nostrRelays: ["wss://relay.wildcat0.clowder-dev.minibill.tech", "wss://relay.wildcat1.clowder-dev.minibill.tech"],
-      );
-      final res = await walletRestore(req: cfg);
-      debugPrint('RESTORE WALLET CALLED, WALLET ID: ${res.walletId}');
-      setState(() {
-        _walletId = res.walletId;
-      });
-    } on WalletError catch (e) {
-      debugPrint('Error, ${e.msg}, ${e.kind}');
-    } catch (e, st) {
-      debugPrint('Unexpected error: $e\n$st');
-    }
-  }
-
-  Future<void> _deleteWallet() async {
-    try {
-      debugPrint('Calling Add Wallet');
-      final req = WalletRequest(walletId: _walletId);
-      await walletDelete(req: req);
-      debugPrint('DELETE WALLET CALLED, WALLET ID: $_walletId');
-    } on WalletError catch (e) {
+    } on EbillError catch (e) {
       debugPrint('Error, ${e.msg}, ${e.kind}');
     } catch (e, st) {
       debugPrint('Unexpected error: $e\n$st');
@@ -320,10 +148,7 @@ class _MyHomePageState extends State<MyHomePage> {
           mainAxisAlignment: .center,
           children: [
             const SizedBox(height: 16),
-            Text('Wallet ID: $_walletId'),
-            Text('Wallet IDs: $_wallets'),
-            Text('Credit Balance: $_credit'),
-            Text('Debit Balance: $_debit'),
+            Text('Hello E-Bill!'),
             FloatingActionButton.extended(
               onPressed: _initFfi,
               tooltip: 'INIT',
@@ -331,73 +156,10 @@ class _MyHomePageState extends State<MyHomePage> {
               icon: const Icon(Icons.start),
             ),
             FloatingActionButton.extended(
-              onPressed: _restoreWallet,
-              tooltip: 'WALLET',
-              label: Text("Restore Wallet"),
-              icon: const Icon(Icons.wallet),
-            ),
-            FloatingActionButton.extended(
-              onPressed: _deleteWallet,
-              tooltip: 'DELETE WALLET',
-              label: Text("Delete Wallet"),
-              icon: const Icon(Icons.delete),
-            ),
-            FloatingActionButton.extended(
-              onPressed: _getWalletIds,
-              tooltip: 'IDS',
-              label: Text("Get Wallet IDS"),
-              icon: const Icon(Icons.list),
-            ),
-            FloatingActionButton.extended(
-              onPressed: _getWalletBalance,
-              tooltip: 'BALANCE',
-              label: Text("Get Wallet Balance"),
-              icon: const Icon(Icons.balance),
-            ),
-            FloatingActionButton.extended(
-              onPressed: _payByToken,
-              tooltip: 'TOKEN',
-              label: Text("Pay by Token"),
-              icon: const Icon(Icons.token),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _controller,
-              keyboardType: TextInputType.text,
-              decoration: const InputDecoration(
-                border: OutlineInputBorder(),
-                labelText: 'Enter a token',
-              ),
-            ),
-            FloatingActionButton.extended(
-              onPressed: _receiveToken,
-              tooltip: 'RECEIVETOKEN',
-              label: Text('Receive Token'),
-              icon: const Icon(Icons.receipt),
-            ),
-            FloatingActionButton.extended(
-              onPressed: _loadTxs,
-              tooltip: 'LOADTX',
-              label: Text('Load Transactions'),
-              icon: const Icon(Icons.list_sharp),
-            ),
-            FloatingActionButton.extended(
               onPressed: _getVersion,
               tooltip: 'GETVERSION',
               label: Text('Get Version'),
               icon: const Icon(Icons.list_sharp),
-            ),
-            FloatingActionButton.extended(
-              onPressed: _checkPayment,
-              tooltip: 'CHECKPAYMENT',
-              label: Text('Check For Payment'),
-              icon: const Icon(Icons.threesixty_sharp),
-            ),
-            FloatingActionButton.extended(
-              onPressed: _cancelCheckPayment,
-              tooltip: 'CANCELCHECKPAYMENT',
-              label: Text('Cancel Check For Payment'),
-              icon: const Icon(Icons.cancel_sharp),
             ),
           ],
         ),

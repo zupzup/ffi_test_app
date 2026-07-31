@@ -65,6 +65,13 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.8"
+  ebill_flutter_ffi:
+    dependency: "direct main"
+    description:
+      path: "../E-Bill"
+      relative: true
+    source: path
+    version: "0.9.9"
   fake_async:
     dependency: transitive
     description:
@@ -304,13 +311,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "15.0.2"
-  wallet_ffi:
-    dependency: "direct main"
-    description:
-      path: "../Wallet-Core"
-      relative: true
-    source: path
-    version: "0.9.7"
   web:
     dependency: transitive
     description:
