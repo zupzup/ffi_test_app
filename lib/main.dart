@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:ebill_flutter_ffi/ebill_flutter_ffi.dart';
+import 'package:ebill_flutter_ffi/api/api.dart' as general;
+import 'package:ebill_flutter_ffi/error.dart' as error;
 import 'package:path_provider/path_provider.dart';
 import 'dart:async';
 
@@ -99,12 +101,12 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Future<void> _getVersion() async {
       try {
-          final st = await getStatus();
+          final st = await general.getStatus();
           setState(() {
             _version = st.appVersion;
           });
           debugPrint('APP VERSION: ${st.appVersion}');
-      } on EbillError catch (e) {
+      } on error.EbillError catch (e) {
           debugPrint('Error, ${e.msg}, ${e.kind}');
       } catch (e, st) {
           debugPrint('Unexpected error: $e\n$st');
