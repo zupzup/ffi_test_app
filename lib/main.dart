@@ -71,6 +71,8 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  String _version = "";
+
   @override
   void dispose() {
     super.dispose();
@@ -88,6 +90,7 @@ class _MyHomePageState extends State<MyHomePage> {
     );
     try {
       await initEbillFfi(conf: conf);
+      await _getVersion();
     } catch (e, st) {
       debugPrint('Unexpected error on INIT: $e\n$st');
     }
@@ -95,14 +98,17 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Future<void> _getVersion() async {
-    try {
-      final st = await getStatus();
-      debugPrint('APP VERSION: ${st.appVersion}');
-    } on EbillError catch (e) {
-      debugPrint('Error, ${e.msg}, ${e.kind}');
-    } catch (e, st) {
-      debugPrint('Unexpected error: $e\n$st');
-    }
+      try {
+          final st = await getStatus();
+          setState(() {
+            _version = st.appVersion;
+          });
+          debugPrint('APP VERSION: ${st.appVersion}');
+      } on EbillError catch (e) {
+          debugPrint('Error, ${e.msg}, ${e.kind}');
+      } catch (e, st) {
+          debugPrint('Unexpected error: $e\n$st');
+      }
   }
 
   @override
@@ -148,7 +154,7 @@ class _MyHomePageState extends State<MyHomePage> {
           mainAxisAlignment: .center,
           children: [
             const SizedBox(height: 16),
-            Text('Hello E-Bill!'),
+            Text('Hello E-Bill $_version!'),
             FloatingActionButton.extended(
               onPressed: _initFfi,
               tooltip: 'INIT',
