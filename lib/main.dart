@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:ebill_flutter_ffi/ebill_flutter_ffi.dart';
-import 'package:ebill_flutter_ffi/api/api.dart' as general;
+import 'package:ebill_flutter_ffi/api/general.dart' as general;
 import 'package:ebill_flutter_ffi/error.dart' as error;
+import 'package:ebill_flutter_ffi/data/lib.dart' as data;
 import 'package:path_provider/path_provider.dart';
 import 'dart:async';
 
@@ -86,13 +87,25 @@ class _MyHomePageState extends State<MyHomePage> {
     final conf = EbillConfig(
       dbFolderPath: dbDir,
       logLevel: "debug",
-      devMode: false,
-      jobIntervalSecs: BigInt.from(60),
-      jobInitialDelaySecs: BigInt.from(60),
+      bitcoinNetwork: "testnet",
+      esploraBaseUrls: ["https://esplora.minibill.tech"],
+      nostrRelays: ["wss://relay.wildcat0.clowder-dev.minibill.tech"],
+      blossomServers: ["https://relay.wildcat0.clowder-dev.minibill.tech"],
+      nostrOnlyKnownContacts: false,
+      jobRunnerInitialDelaySeconds: BigInt.from(5),
+      jobRunnerCheckIntervalSeconds: BigInt.from(60),
+      transportInitialSubscriptionDelaySeconds: 1,
+      defaultMintUrl: "https://mint.wildcat0.clowder-dev.minibill.tech",
+      defaultMintNodeId: "bitcrt020e50d48b6b2897743ca257c82684e984509c05c9bf812176c717005698e57023", //wildcat0 clowder-dev
+      numConfirmationsForPayment: BigInt.from(1),
+      devMode: true,
+      mandatoryEmailConfirmations: false,
+      defaultCourtUrl: "https://bcr-court-dev.minibill.tech"
     );
     try {
       await initEbillFfi(conf: conf);
       await _getVersion();
+      await _getLinkToPay();
     } catch (e, st) {
       debugPrint('Unexpected error on INIT: $e\n$st');
     }
@@ -106,7 +119,23 @@ class _MyHomePageState extends State<MyHomePage> {
             _version = st.appVersion;
           });
           debugPrint('APP VERSION: ${st.appVersion}');
-      } on error.EbillError catch (e) {
+      } on error.EbillFfiError catch (e) {
+          debugPrint('Error, ${e.msg}, ${e.kind}');
+      } catch (e, st) {
+          debugPrint('Unexpected error: $e\n$st');
+      }
+  }
+
+  Future<void> _getLinkToPay() async {
+      try {
+          final pl = data.BtcAddressAndSumPayload(
+            billId: "hi",
+            address: "hi",
+            sum: "15",
+          );
+          final st = await general.linkToPay(pl: pl);
+          debugPrint('Link To Pay: ${st.linkToPay}');
+      } on error.EbillFfiError catch (e) {
           debugPrint('Error, ${e.msg}, ${e.kind}');
       } catch (e, st) {
           debugPrint('Unexpected error: $e\n$st');
