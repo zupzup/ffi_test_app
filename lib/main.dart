@@ -105,7 +105,6 @@ class _MyHomePageState extends State<MyHomePage> {
     try {
       await initEbillFfi(conf: conf);
       await _getVersion();
-      await _getLinkToPay();
     } catch (e, st) {
       debugPrint('Unexpected error on INIT: $e\n$st');
     }
@@ -196,6 +195,12 @@ class _MyHomePageState extends State<MyHomePage> {
               onPressed: _getVersion,
               tooltip: 'GETVERSION',
               label: Text('Get Version'),
+              icon: const Icon(Icons.list_sharp),
+            ),
+            FloatingActionButton.extended(
+              onPressed: _getLinkToPay,
+              tooltip: 'GETLINK',
+              label: Text('Get Link To Pay'),
               icon: const Icon(Icons.list_sharp),
             ),
           ],
