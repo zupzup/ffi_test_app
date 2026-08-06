@@ -16,7 +16,7 @@ void main() async {
 
 Future<String> getDatabaseDir() async {
   final dir = await getApplicationSupportDirectory();
-  final dbPath = '${dir.path}/wallet-data_7.db';
+  final dbPath = '${dir.path}/ebill-data_1.db';
 
   // Ensure folder exists
   await dir.create(recursive: true);
