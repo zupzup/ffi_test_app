@@ -183,6 +183,17 @@ class _MyHomePageState extends State<MyHomePage> {
       }
   }
 
+  Future<void> _getIdentity() async {
+      try {
+          final identityRes = await identity.detail();
+          debugPrint('Create: ${identityRes.name} ${identityRes.nodeId}');
+      } on error.EbillFfiError catch (e) {
+          debugPrint('Error, ${e.msg}, ${e.kind}');
+      } catch (e, st) {
+          debugPrint('Unexpected error: $e\n$st');
+      }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -249,6 +260,12 @@ class _MyHomePageState extends State<MyHomePage> {
               onPressed: _createIdentity,
               tooltip: 'CREATE_IDENTITY',
               label: Text('Create Identity'),
+              icon: const Icon(Icons.list_sharp),
+            ),
+            FloatingActionButton.extended(
+              onPressed: _getIdentity,
+              tooltip: 'GET',
+              label: Text('Get Identity'),
               icon: const Icon(Icons.list_sharp),
             ),
           ],
