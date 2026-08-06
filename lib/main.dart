@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:ebill_flutter_ffi/ebill_flutter_ffi.dart';
 import 'package:ebill_flutter_ffi/api/general.dart' as general;
+import 'package:ebill_flutter_ffi/api/identity.dart' as identity;
 import 'package:ebill_flutter_ffi/error.dart' as error;
 import 'package:ebill_flutter_ffi/data/lib.dart' as data;
+import 'package:ebill_flutter_ffi/data/identity.dart' as identity_data;
 import 'package:path_provider/path_provider.dart';
 import 'dart:async';
 
@@ -16,7 +18,17 @@ void main() async {
 
 Future<String> getDatabaseDir() async {
   final dir = await getApplicationSupportDirectory();
-  final dbPath = '${dir.path}/ebill-data_1.db';
+  final dbPath = '${dir.path}/ebill-data_3.db';
+
+  // Ensure folder exists
+  await dir.create(recursive: true);
+
+  return dbPath;
+}
+
+Future<String> getDatabaseDirFiles() async {
+  final dir = await getApplicationSupportDirectory();
+  final dbPath = '${dir.path}/ebill-files_3.db';
 
   // Ensure folder exists
   await dir.create(recursive: true);
@@ -84,8 +96,10 @@ class _MyHomePageState extends State<MyHomePage> {
   Future<void> _initFfi() async {
     debugPrint('E-Bill init');
     final dbDir = await getDatabaseDir();
+    final dbDirFiles = await getDatabaseDirFiles();
     final conf = EbillConfig(
       dbFolderPath: dbDir,
+      dbFolderPathFiles: dbDirFiles,
       logLevel: "debug",
       bitcoinNetwork: "testnet",
       esploraBaseUrls: ["https://esplora.minibill.tech"],
@@ -134,6 +148,34 @@ class _MyHomePageState extends State<MyHomePage> {
           );
           final st = await general.linkToPay(pl: pl);
           debugPrint('Link To Pay: ${st.linkToPay}');
+      } on error.EbillFfiError catch (e) {
+          debugPrint('Error, ${e.msg}, ${e.kind}');
+      } catch (e, st) {
+          debugPrint('Unexpected error: $e\n$st');
+      }
+  }
+
+  Future<void> _createIdentity() async {
+      try {
+          final pl = identity_data.NewIdentityPayload(
+                  t: BigInt.from(1),
+                  name: "Minka",
+                  email: null,
+                  postalAddress: data.CreateOptionalPostalAddressFfi(
+                      country: null,
+                      city: null,
+                      zip: null,
+                      address: null,
+                      ),
+                  dateOfBirth: null,
+                  countryOfBirth: null,
+                  cityOfBirth: null,
+                  identificationNumber: null,
+                  profilePictureFileUploadId: null,
+                  identityDocumentFileUploadId: null,
+                  );
+          final identityRes = await identity.create(identity: pl);
+          debugPrint('Create: $identityRes');
       } on error.EbillFfiError catch (e) {
           debugPrint('Error, ${e.msg}, ${e.kind}');
       } catch (e, st) {
@@ -201,6 +243,12 @@ class _MyHomePageState extends State<MyHomePage> {
               onPressed: _getLinkToPay,
               tooltip: 'GETLINK',
               label: Text('Get Link To Pay'),
+              icon: const Icon(Icons.list_sharp),
+            ),
+            FloatingActionButton.extended(
+              onPressed: _createIdentity,
+              tooltip: 'CREATE_IDENTITY',
+              label: Text('Create Identity'),
               icon: const Icon(Icons.list_sharp),
             ),
           ],
