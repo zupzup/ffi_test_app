@@ -131,7 +131,7 @@ class _MyHomePageState extends State<MyHomePage> {
           setState(() {
             _version = st.appVersion;
           });
-          debugPrint('APP VERSION: ${st.appVersion}');
+          debugPrint('APP VERSION: ${st.appVersion}, ${st.bitcoinNetwork}, ${st.connected}');
       } on error.EbillFfiError catch (e) {
           debugPrint('Error, ${e.msg}, ${e.kind}');
       } catch (e, st) {
