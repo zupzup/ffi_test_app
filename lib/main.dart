@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:ebill_flutter_ffi/ebill_flutter_ffi.dart';
 import 'package:ebill_flutter_ffi/api/general.dart' as general;
 import 'package:ebill_flutter_ffi/api/identity.dart' as identity;
+import 'package:ebill_flutter_ffi/api/bill.dart' as bill;
 import 'package:ebill_flutter_ffi/error.dart' as error;
 import 'package:ebill_flutter_ffi/data/lib.dart' as data;
 import 'package:ebill_flutter_ffi/data/identity.dart' as identity_data;
@@ -194,6 +195,21 @@ class _MyHomePageState extends State<MyHomePage> {
       }
   }
 
+  Future<void> _getBills() async {
+      try {
+          final billRes = await bill.list();
+
+          for (int i = 0; i < billRes.bills.length; i++) {
+              var bill = billRes.bills[i];
+              debugPrint('Bill: ${bill.id}');
+          }
+      } on error.EbillFfiError catch (e) {
+          debugPrint('Error, ${e.msg}, ${e.kind}');
+      } catch (e, st) {
+          debugPrint('Unexpected error: $e\n$st');
+      }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -266,6 +282,12 @@ class _MyHomePageState extends State<MyHomePage> {
               onPressed: _getIdentity,
               tooltip: 'GET',
               label: Text('Get Identity'),
+              icon: const Icon(Icons.list_sharp),
+            ),
+            FloatingActionButton.extended(
+              onPressed: _getBills,
+              tooltip: 'GET',
+              label: Text('Get Bills'),
               icon: const Icon(Icons.list_sharp),
             ),
           ],
