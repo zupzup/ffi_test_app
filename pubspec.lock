@@ -68,9 +68,11 @@ packages:
   ebill_flutter_ffi:
     dependency: "direct main"
     description:
-      path: "../E-Bill"
-      relative: true
-    source: path
+      path: "."
+      ref: "zupzup/native-flutter-api-init"
+      resolved-ref: "4928fd64cab46f07b535c07164263eb8c2f10414"
+      url: "git@github.com:BitcreditProtocol/E-Bill.git"
+    source: git
     version: "0.9.9"
   fake_async:
     dependency: transitive
