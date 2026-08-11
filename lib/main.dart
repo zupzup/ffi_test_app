@@ -3,9 +3,12 @@ import 'package:ebill_flutter_ffi/ebill_flutter_ffi.dart';
 import 'package:ebill_flutter_ffi/api/general.dart' as general;
 import 'package:ebill_flutter_ffi/api/identity.dart' as identity;
 import 'package:ebill_flutter_ffi/api/bill.dart' as bill;
+import 'package:ebill_flutter_ffi/api/contact.dart' as contact;
 import 'package:ebill_flutter_ffi/error.dart' as error;
 import 'package:ebill_flutter_ffi/data/lib.dart' as data;
 import 'package:ebill_flutter_ffi/data/identity.dart' as identity_data;
+import 'package:ebill_flutter_ffi/data/contact.dart' as contact_data;
+import 'package:ebill_flutter_ffi/data/bill.dart' as bill_data;
 import 'package:path_provider/path_provider.dart';
 import 'dart:async';
 
@@ -19,7 +22,7 @@ void main() async {
 
 Future<String> getDatabaseDir() async {
   final dir = await getApplicationSupportDirectory();
-  final dbPath = '${dir.path}/ebill-data_3.db';
+  final dbPath = '${dir.path}/ebill-data_4.db';
 
   // Ensure folder exists
   await dir.create(recursive: true);
@@ -159,14 +162,14 @@ class _MyHomePageState extends State<MyHomePage> {
   Future<void> _createIdentity() async {
       try {
           final pl = identity_data.NewIdentityPayload(
-                  t: BigInt.from(1),
+                  t: BigInt.from(0),
                   name: "Minka",
-                  email: null,
+                  email: "minka@example.com",
                   postalAddress: data.CreateOptionalPostalAddressFfi(
-                      country: null,
-                      city: null,
+                      country: "AT",
+                      city: "Vienna",
                       zip: null,
-                      address: null,
+                      address: "Hello",
                       ),
                   dateOfBirth: null,
                   countryOfBirth: null,
@@ -203,6 +206,71 @@ class _MyHomePageState extends State<MyHomePage> {
               var bill = billRes.bills[i];
               debugPrint('Bill: ${bill.id}');
           }
+      } on error.EbillFfiError catch (e) {
+          debugPrint('Error, ${e.msg}, ${e.kind}');
+      } catch (e, st) {
+          debugPrint('Unexpected error: $e\n$st');
+      }
+  }
+
+  Future<void> _issueBill() async {
+      try {
+          final pl = bill_data.BitcreditBillPayload(
+                  t: BigInt.from(1),
+                  countryOfIssuing: "AT",
+                  cityOfIssuing: "Vienna",
+                  issueDate: "2026-08-11",
+                  maturityDate: "2026-11-22",
+                  payee: "bitcrt031cf38e999951133d689d7fb3bc54640e70e3c3b02321dc5e08d391d76a8ba94e",
+                  drawee: "bitcrt035a2609fdfdb846109b420e9d1393f76b37bed8c57f91bc2f269d2c3b07a982ce",
+                  sum: "1000",
+                  currency: "SAT",
+                  countryOfPayment: "AT",
+                  cityOfPayment: "Vienna",
+                  fileUploadIds: [],
+          );
+          final b = await bill.issue(billPayload: pl);
+          debugPrint('Bill: ${b.id}');
+      } on error.EbillFfiError catch (e) {
+          debugPrint('Error, ${e.msg}, ${e.kind}');
+      } catch (e, st) {
+          debugPrint('Unexpected error: $e\n$st');
+      }
+  }
+
+  Future<void> _getContact() async {
+      try {
+          final c = await contact.detail(nodeId: "bitcrt035a2609fdfdb846109b420e9d1393f76b37bed8c57f91bc2f269d2c3b07a982ce");
+          debugPrint('Contact: ${c.name}, ${c.nodeId}');
+      } on error.EbillFfiError catch (e) {
+          debugPrint('Error, ${e.msg}, ${e.kind}');
+      } catch (e, st) {
+          debugPrint('Unexpected error: $e\n$st');
+      }
+  }
+
+  Future<void> _createContact() async {
+      try {
+          final pl = contact_data.NewContactPayload(
+            t: BigInt.from(0),
+            nodeId: "bitcrt035a2609fdfdb846109b420e9d1393f76b37bed8c57f91bc2f269d2c3b07a982ce",
+            name: "minka",
+            email: "minka@example.com",
+            postalAddress: data.CreatePostalAddressFfi(
+                country: "AT",
+                city: "Vienna",
+                zip: null,
+                address: "Hello",
+            ),
+            dateOfBirthOrRegistration: null,
+            countryOfBirthOrRegistration: null,
+            cityOfBirthOrRegistration: null,
+            identificationNumber: null,
+            avatarFileUploadId: null,
+            proofDocumentFileUploadId: null,
+          );
+          final c = await contact.create(contactPayload: pl);
+          debugPrint('Contact: ${c.nodeId}');
       } on error.EbillFfiError catch (e) {
           debugPrint('Error, ${e.msg}, ${e.kind}');
       } catch (e, st) {
@@ -285,9 +353,27 @@ class _MyHomePageState extends State<MyHomePage> {
               icon: const Icon(Icons.list_sharp),
             ),
             FloatingActionButton.extended(
+              onPressed: _issueBill,
+              tooltip: 'GET',
+              label: Text('Issue Bill'),
+              icon: const Icon(Icons.list_sharp),
+            ),
+            FloatingActionButton.extended(
               onPressed: _getBills,
               tooltip: 'GET',
               label: Text('Get Bills'),
+              icon: const Icon(Icons.list_sharp),
+            ),
+            FloatingActionButton.extended(
+              onPressed: _createContact,
+              tooltip: 'GET',
+              label: Text('Create Contact'),
+              icon: const Icon(Icons.list_sharp),
+            ),
+            FloatingActionButton.extended(
+              onPressed: _getContact,
+              tooltip: 'GET',
+              label: Text('Get Contact'),
               icon: const Icon(Icons.list_sharp),
             ),
           ],
