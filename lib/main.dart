@@ -146,8 +146,8 @@ class _MyHomePageState extends State<MyHomePage> {
   Future<void> _getLinkToPay() async {
       try {
           final pl = data.BtcAddressAndSumPayload(
-            billId: "hi",
-            address: "hi",
+            billId: "bitcrt6L36comWzXMqWUWeb93453YJvNbjhaPokhjxg6bL8JJ4",
+            address: "tb1qteyk7pfvvql2r2zrsu4h4xpvju0nz7ykvguyk0",
             sum: "15",
           );
           final st = await general.linkToPay(pl: pl);
