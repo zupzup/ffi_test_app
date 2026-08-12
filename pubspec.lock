@@ -70,7 +70,7 @@ packages:
     description:
       path: "."
       ref: "zupzup/native-flutter-api-init"
-      resolved-ref: "4928fd64cab46f07b535c07164263eb8c2f10414"
+      resolved-ref: f1c690d5fd8682a16f912707acbf50aee794085a
       url: "git@github.com:BitcreditProtocol/E-Bill.git"
     source: git
     version: "0.9.9"

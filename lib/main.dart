@@ -136,6 +136,10 @@ class _MyHomePageState extends State<MyHomePage> {
             _version = st.appVersion;
           });
           debugPrint('APP VERSION: ${st.appVersion}, ${st.bitcoinNetwork}, ${st.connected}');
+          final test = const data.EditOptionalFieldModeFfi.set_("1020");
+          final test_2 = const data.EditOptionalFieldModeFfi.ignore();
+          debugPrint('$test');
+          debugPrint('$test_2');
       } on error.EbillFfiError catch (e) {
           debugPrint('Error, ${e.msg}, ${e.kind}');
       } catch (e, st) {
