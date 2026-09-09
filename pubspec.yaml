@@ -35,13 +35,13 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
 
-  # ebill_flutter_ffi:
-  #   path: ../E-Bill
-
   ebill_flutter_ffi:
-     git:
-       url: git@github.com:BitcreditProtocol/E-Bill.git
-       ref: "zupzup/native-flutter-api-init"
+    path: ../E-Bill
+
+  # ebill_flutter_ffi:
+  #    git:
+  #      url: git@github.com:BitcreditProtocol/E-Bill.git
+  #      ref: "zupzup/native-flutter-api-init"
 
   path_provider: ^2.1.2
 
