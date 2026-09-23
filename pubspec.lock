@@ -71,7 +71,7 @@ packages:
       path: "../E-Bill"
       relative: true
     source: path
-    version: "0.9.9"
+    version: "0.6.0"
   fake_async:
     dependency: transitive
     description:
